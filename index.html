@@ -3,23 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover" />
-  <title>WebAR Atom (Markerless)</title>
+  <title>WebAR — Model Atom (Dalton | Thomson | Rutherford | Bohr | Kuantum)</title>
   <style>
-    html,body { height:100%; margin:0; font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial; -webkit-font-smoothing:antialiased; }
-    #overlay {
-      position: absolute; left: 12px; top: 12px; z-index: 10;
-      background: rgba(255,255,255,0.92); padding:10px; border-radius:10px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.12); max-width: 320px;
-      font-size:14px;
-    }
-    label { display:block; margin-bottom:6px; font-weight:600; }
-    select, button { width:100%; padding:8px 10px; margin-bottom:8px; border-radius:8px; border:1px solid #ddd; background:white; }
-    #hint { font-size:12px; color:#555; }
-    #canvas-container { width:100%; height:100%; overflow:hidden; }
-    .credit { position: absolute; right:12px; bottom:12px; background: rgba(0,0,0,0.6); color:#fff; padding:6px 10px; border-radius:8px; z-index:10; font-size:13px;}
+    html,body{height:100%;margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    #ui{position:absolute;left:12px;top:12px;z-index:15;background:rgba(255,255,255,0.96);padding:12px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.12);width:340px}
+    label{display:block;font-weight:600;margin-bottom:6px}
+    select,input[type=range],button,input[type=color]{width:100%;padding:8px;margin-bottom:8px;border-radius:8px;border:1px solid #ddd}
+    #canvas-container{width:100%;height:100%;overflow:hidden}
+    .credit{position:absolute;right:12px;bottom:12px;background:rgba(0,0,0,0.6);color:#fff;padding:6px 10px;border-radius:8px;z-index:10;font-size:13px}
+    .small{font-size:13px;color:#444}
+    .row{display:flex;gap:8px}
+    .row button{flex:1}
   </style>
 
-  <!-- Import map fixes bare module specifiers like "three" so example modules that import 'three' will resolve correctly. -->
+  <!-- Import map untuk modul Three.js agar 'three' dan examples/jsm/... ter-resolve -->
   <script type="importmap">
   {
     "imports": {
@@ -30,330 +27,313 @@
   </script>
 </head>
 <body>
-  <div id="overlay">
-    <label for="atomSelect">Pilih Jenis Atom</label>
-    <select id="atomSelect">
-      <option value="H">Hydrogen (H)</option>
-      <option value="He">Helium (He)</option>
-      <option value="Li">Lithium (Li)</option>
-      <option value="C">Carbon (C)</option>
-      <option value="O">Oxygen (O)</option>
-      <option value="Ne">Neon (Ne)</option>
+  <div id="ui">
+    <label for="modelSelect">Pilih Model Atom</label>
+    <select id="modelSelect">
+      <option value="dalton">Dalton</option>
+      <option value="thomson">Thomson</option>
+      <option value="rutherford">Rutherford</option>
+      <option value="bohr">Bohr</option>
+      <option value="kuantum">Kuantum (Orbital H)</option>
     </select>
-    <button id="resetBtn">Reset Model</button>
-    <div id="hint">Tekan <strong>"Enter AR"</strong> untuk meletakkan model di permukaan (jika device mendukung WebXR AR).</div>
+
+    <div id="modelControls">
+      <!-- controls specific ke model akan dimasukkan di sini secara dinamis -->
+    </div>
+
+    <div class="row">
+      <button id="enterAR">Enter AR</button>
+      <button id="resetBtn">Reset View</button>
+    </div>
+    <div class="small">Tekan <strong>Enter AR</strong> untuk meletakkan model di permukaan (Chrome Android + ARCore direkomendasikan). Jika WebXR tidak tersedia, preview 3D tetap berfungsi.</div>
   </div>
 
   <div id="canvas-container"></div>
-  <div class="credit">AR Markerless — Ari</div>
+  <div class="credit">Model Atom — Ari</div>
 
   <script type="module">
-    // Using bare imports (e.g. 'three' and 'three/examples/...') — the importmap above maps 'three' to the CDN module.
-    // This avoids the "Failed to resolve module specifier 'three'" error in browsers that support import maps.
     import * as THREE from 'three';
     import { ARButton } from 'three/examples/jsm/webxr/ARButton.js';
     import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-    // ---------- Config atom sederhana ----------
-    // electronShells arrays: each number is electrons in that shell
-    const ATOMS = {
-      "H":  { protons:1,  neutrons:0,  electrons: [1] },
-      "He": { protons:2,  neutrons:2,  electrons: [2] },
-      "Li": { protons:3,  neutrons:4,  electrons: [2,1] },
-      "C":  { protons:6,  neutrons:6,  electrons: [2,4] }, // simple valence
-      "O":  { protons:8,  neutrons:8,  electrons: [2,6] },
-      "Ne": { protons:10, neutrons:10, electrons: [2,8] },
-    };
-
-    // ---------- Scene, renderer ----------
+    // Common scene / renderer
     const container = document.getElementById('canvas-container');
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
-    const camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.01, 20);
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.01, 50);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.xr.enabled = true;
     container.appendChild(renderer.domElement);
 
-    // LIGHT
-    const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
-    scene.add(hemi);
-    const dir = new THREE.DirectionalLight(0xffffff, 0.8);
-    dir.position.set(3,5,1);
-    scene.add(dir);
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0); scene.add(hemi);
+    const dir = new THREE.DirectionalLight(0xffffff, 0.9); dir.position.set(3,5,1); scene.add(dir);
 
-    // Controls for non-AR fallback
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.set(0, 0.15, 0);
-    camera.position.set(0, 1.2, 1.8);
-    controls.update();
+    camera.position.set(0,1.2,1.8); controls.target.set(0,0.15,0); controls.update();
 
-    // Root for atom model; in AR we'll attach this to an anchor at hit-test.
-    let atomRoot = new THREE.Group();
-    atomRoot.visible = false;
-    scene.add(atomRoot);
+    // root group used by all models
+    const atomRoot = new THREE.Group(); atomRoot.visible = false; scene.add(atomRoot);
 
-    // variables for physics/animation
-    let electrons = []; // {mesh, orbitRadius, speed, inclination, phase}
-    let nucleusParts = []; // proton/neutron meshes (if we want to animate)
-    let animStart = performance.now();
+    // reticle & AR hit-test shared
+    let reticle = null; function createReticle(){ const geo = new THREE.RingGeometry(0.07,0.095,32).rotateX(-Math.PI/2); const mat = new THREE.MeshBasicMaterial({ color:0x00ffcc, opacity:0.7, transparent:true }); reticle = new THREE.Mesh(geo, mat); reticle.visible=false; scene.add(reticle);} createReticle();
+    let hitTestSource = null; let localRefSpace = null;
 
-    // MATERIALS
-    const protonMat = new THREE.MeshStandardMaterial({ color: 0xff3355, metalness:0.2, roughness:0.6 });
-    const neutronMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness:0.2, roughness:0.6 });
-    const electronMat = new THREE.MeshStandardMaterial({ color: 0x3399ff, metalness:0.6, roughness:0.2 });
-    const shellMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, opacity: 0.09, transparent: true });
-
-    // Build nucleus: pack protons+neutrons roughly in a sphere
-    function buildNucleus(protons, neutrons) {
-      // clear previous nucleus
-      nucleusParts.forEach(m => atomRoot.remove(m));
-      nucleusParts = [];
-
-      const total = protons + neutrons;
-      const radius = 0.08 + Math.cbrt(total) * 0.02; // visual scale
-      const sphereGeom = new THREE.SphereGeometry(0.035, 16, 12);
-
-      // distribute positions within small radius
-      for (let i=0;i<total;i++){
-        const p = new THREE.Mesh(sphereGeom, i < protons ? protonMat : neutronMat);
-        // random point in sphere
-        const r = Math.random() * radius * 0.9;
-        const theta = Math.acos(2*Math.random() - 1);
-        const phi = Math.random() * Math.PI * 2;
-        p.position.set(
-          r * Math.sin(theta) * Math.cos(phi),
-          r * Math.sin(theta) * Math.sin(phi),
-          r * Math.cos(theta)
-        );
-        p.scale.setScalar(1.0 - Math.random()*0.25);
-        atomRoot.add(p);
-        nucleusParts.push(p);
-      }
-    }
-
-    // Build electrons shells
-    function buildElectrons(shells) {
-      // clear previous electrons and shells
-      electrons.forEach(e => atomRoot.remove(e.mesh));
-      electrons = [];
-      // remove previous shell visuals
-      const prevShells = atomRoot.getObjectByName('shellsGroup');
-      if(prevShells) atomRoot.remove(prevShells);
-
-      const shellsGroup = new THREE.Group();
-      shellsGroup.name = 'shellsGroup';
-      atomRoot.add(shellsGroup);
-
-      const baseRadius = 0.2;
-      for (let s=0; s<shells.length; s++){
-        const count = shells[s];
-        const orbitRadius = baseRadius + s * 0.18 + Math.max(0, s-1)*0.06;
-        // shell visual
-        const shellGeom = new THREE.SphereGeometry(orbitRadius, 32, 16);
-        const shell = new THREE.Mesh(shellGeom, shellMat);
-        shellsGroup.add(shell);
-
-        for (let i=0;i<count;i++){
-          const phi = (i / count) * Math.PI * 2;
-          // each electron is smaller sphere
-          const geom = new THREE.SphereGeometry(0.03, 12, 10);
-          const m = new THREE.Mesh(geom, electronMat);
-          // initial position
-          const x = Math.cos(phi) * orbitRadius;
-          const z = Math.sin(phi) * orbitRadius;
-          const y = Math.sin((i+1)*0.3 + s*0.2) * 0.05;
-          m.position.set(x, y, z);
-          atomRoot.add(m);
-          // push behavior
-          electrons.push({
-            mesh: m,
-            orbitRadius,
-            speed: 0.6 + 0.2*Math.random() + s*0.05,
-            inclination: (Math.random()*0.6 - 0.3), // tilt
-            phase: Math.random()*Math.PI*2,
-            shellIndex: s
-          });
-        }
-      }
-    }
-
-    // Build atom model (high-level)
-    function buildAtom(atomKey) {
-      const cfg = ATOMS[atomKey] || ATOMS['C'];
-      // reset
-      atomRoot.position.set(0,0, -0.2); // initial offset for non-AR view
-      atomRoot.visible = true;
-      // clear children except atomRoot itself handled in builders
-      buildNucleus(cfg.protons, cfg.neutrons);
-      buildElectrons(cfg.electrons);
-    }
-
-    // animate electrons
-    function animateElectrons(t) {
-      const elapsed = (t - animStart) / 1000;
-      for (const e of electrons) {
-        const phase = e.phase + elapsed * e.speed;
-        // circular orbit plus tilt/inclination
-        const r = e.orbitRadius;
-        const x = Math.cos(phase) * r;
-        const z = Math.sin(phase) * r * Math.cos(e.inclination);
-        const y = Math.sin(phase * 1.7 + e.phase) * 0.06 + Math.sin(e.inclination*5) * 0.02;
-        e.mesh.position.set(x, y, z);
-        // add a subtle rotation for the electron itself
-        e.mesh.rotation.x += 0.02 + 0.01*Math.sin(elapsed);
-        e.mesh.rotation.y += 0.03;
-      }
-      // slight nucleus "breath"
-      const breath = 1 + Math.sin(elapsed*2.3) * 0.01;
-      nucleusParts.forEach((n, idx) => n.scale.setScalar(breath - (idx%2)*0.01));
-    }
-
-    // ---------- AR stuff: hit-test and placement ----------
-    let hitTestSource = null;
-    let localReferenceSpace = null;
-    let placed = false; // whether user placed the atom in AR
-    let reticle = null;
-
-    // create reticle for indicating placement (simple ring)
-    function createReticle() {
-      const geometry = new THREE.RingGeometry(0.07, 0.095, 32).rotateX(-Math.PI/2);
-      const mat = new THREE.MeshBasicMaterial({ color: 0x00ffcc, opacity: 0.7, transparent: true });
-      const mesh = new THREE.Mesh(geometry, mat);
-      mesh.visible = false;
-      scene.add(mesh);
-      reticle = mesh;
-    }
-    createReticle();
-
-    // function to start AR session
-    function initARButton() {
-      // ARButton will add a button automatically if available
+    function initARButton(){
       const arBtn = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
-      // reposition the AR button below our overlay
-      arBtn.style.position = 'absolute';
-      arBtn.style.bottom = '12px';
-      arBtn.style.left = '50%';
-      arBtn.style.transform = 'translateX(-50%)';
-      arBtn.style.zIndex = 12;
+      arBtn.style.position = 'absolute'; arBtn.style.bottom = '12px'; arBtn.style.left = '50%'; arBtn.style.transform = 'translateX(-50%)'; arBtn.style.zIndex = 12;
       document.body.appendChild(arBtn);
 
-      // listen for session start to setup hit-test
-      renderer.xr.addEventListener('sessionstart', async () => {
+      renderer.xr.addEventListener('sessionstart', async ()=>{
         const session = renderer.xr.getSession();
-        // Reference space
-        localReferenceSpace = await session.requestReferenceSpace('viewer');
-
-        // request hit-test source (viewer space)
-        if (session.requestHitTestSource) {
-          try {
-            hitTestSource = await session.requestHitTestSource({ space: localReferenceSpace });
-          } catch (err) {
-            console.warn('Hit test source request failed:', err);
-            hitTestSource = null;
-          }
-        }
-
-        session.addEventListener('select', onSelect); // tap to place
-        placed = false;
-        reticle.visible = false;
+        try{ localRefSpace = await session.requestReferenceSpace('viewer'); hitTestSource = await session.requestHitTestSource({ space: localRefSpace }); }
+        catch(err){ console.warn('Hit test init failed', err); hitTestSource = null; }
+        session.addEventListener('select', ()=>{ if(reticle && reticle.visible){ atomRoot.position.copy(reticle.position); atomRoot.quaternion.copy(reticle.quaternion); atomRoot.visible = true; reticle.visible = false; } });
       });
 
-      renderer.xr.addEventListener('sessionend', () => {
-        hitTestSource = null;
-        localReferenceSpace = null;
-        reticle.visible = false;
-        placed = false;
-      });
+      renderer.xr.addEventListener('sessionend', ()=>{ hitTestSource=null; localRefSpace=null; reticle.visible=false; atomRoot.visible=true; });
     }
 
-    function onSelect() {
-      // place the atomRoot at reticle location
-      if (reticle && reticle.visible) {
-        atomRoot.position.copy(reticle.position);
-        atomRoot.quaternion.copy(reticle.quaternion);
-        atomRoot.visible = true;
-        placed = true;
-        // once placed, optionally hide reticle or keep it
-        reticle.visible = false;
-      }
-    }
-
-    // ---------- animation loop ----------
-    function renderLoop(timestamp, frame) {
-      // AR hit-test updates reticle
-      if (frame && renderer.xr.isPresenting && hitTestSource) {
-        const referenceSpace = renderer.xr.getReferenceSpace();
-        const hitTestResults = frame.getHitTestResults(hitTestSource);
-        if (hitTestResults.length > 0) {
-          const hit = hitTestResults[0];
-          const pose = hit.getPose(referenceSpace);
-          if (pose) {
-            // position reticle
-            reticle.visible = true;
-            reticle.position.set(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z);
-            reticle.quaternion.set(pose.transform.orientation.x, pose.transform.orientation.y, pose.transform.orientation.z, pose.transform.orientation.w);
-          }
-        } else {
-          reticle.visible = false;
-        }
-      }
-
-      // non-AR fallback: animation still runs
-      animateElectrons(timestamp);
-
-      renderer.render(scene, camera);
-    }
-
-    renderer.setAnimationLoop(renderLoop);
-
-    // ---------- UI hooks ----------
-    const atomSelect = document.getElementById('atomSelect');
-    const resetBtn = document.getElementById('resetBtn');
-
-    atomSelect.addEventListener('change', (e) => {
-      const key = e.target.value;
-      buildAtom(key);
-    });
-
-    resetBtn.addEventListener('click', () => {
-      placed = false;
-      atomRoot.visible = false;
-      // rebuild currently selected atom
-      buildAtom(atomSelect.value);
-      // reposition camera for non-AR preview
-      camera.position.set(0, 1.2, 1.8);
-      controls.update();
-    });
-
-    // initial atom
-    buildAtom(atomSelect.value);
-
-    // ARButton init (adds button if supported)
     initARButton();
 
-    // Handle resize
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth/window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+    // --- Model builders ---
+    // We'll implement each model as a function that clears atomRoot and builds its content.
+
+    function clearAtomRoot(){ while(atomRoot.children.length) atomRoot.remove(atomRoot.children[0]); }
+
+    // --- Dalton ---
+    function buildDalton(opts={color:'#ff6633', scale:1}){
+      clearAtomRoot();
+      const sphereGeom = new THREE.SphereGeometry(0.2, 48, 32);
+      const sphereMat = new THREE.MeshStandardMaterial({ color: opts.color, metalness:0.2, roughness:0.5 });
+      const daltonSphere = new THREE.Mesh(sphereGeom, sphereMat);
+      daltonSphere.scale.setScalar(opts.scale);
+      atomRoot.add(daltonSphere);
+
+      const label = makeLabelSprite('Dalton Atom', 0.6*opts.scale, 0.15*opts.scale);
+      label.position.set(0,0.34*opts.scale,0); atomRoot.add(label);
+      atomRoot.position.set(0,0,-0.2); atomRoot.visible = true;
+
+      // simple rotation in render loop (store reference)
+      atomRoot.userData.update = (t)=>{ daltonSphere.rotation.y = t*0.18; };
+    }
+
+    // --- Thomson (plum pudding) ---
+    function buildThomson(opts={puddingColor:'#ffd480', electronColor:'#397cff', count:8, scale:1}){
+      clearAtomRoot();
+      const puddingMesh = new THREE.Mesh(new THREE.SphereGeometry(0.25, 64, 48), new THREE.MeshStandardMaterial({ color:opts.puddingColor, opacity:0.88, transparent:true, roughness:0.6 }));
+      puddingMesh.scale.setScalar(opts.scale); atomRoot.add(puddingMesh);
+
+      const electrons = [];
+      const R = 0.22 * opts.scale;
+      for(let i=0;i<opts.count;i++){
+        const geom = new THREE.SphereGeometry(0.03, 16, 12);
+        const mat = new THREE.MeshStandardMaterial({ color:opts.electronColor, metalness:0.6, roughness:0.3 });
+        const m = new THREE.Mesh(geom, mat);
+        const u = Math.random(); const r = Math.cbrt(u) * (R * (0.6 + Math.random()*0.4));
+        const theta = Math.acos(2*Math.random()-1); const phi = Math.random()*Math.PI*2;
+        const x = r * Math.sin(theta) * Math.cos(phi); const y = r * Math.sin(theta) * Math.sin(phi); const z = r * Math.cos(theta);
+        m.position.set(x,y,z); atomRoot.add(m);
+        electrons.push({mesh:m, base:new THREE.Vector3(x,y,z), phase:Math.random()*Math.PI*2, amp:0.03});
+      }
+
+      const label = makeLabelSprite('Thomson Atom', 0.7*opts.scale, 0.18*opts.scale); label.position.set(0,0.42*opts.scale,0); atomRoot.add(label);
+      atomRoot.position.set(0,0,-0.2); atomRoot.visible=true;
+
+      atomRoot.userData.update = (t)=>{
+        const elapsed = t;
+        puddingMesh.rotation.y = Math.sin(elapsed*0.2)*0.06;
+        for(const e of electrons){ const n = Math.sin(elapsed* (0.8 + e.phase)); const off = e.amp * n; e.mesh.position.set(e.base.x + Math.sin(elapsed*1.3+e.phase)*off, e.base.y + Math.cos(elapsed*1.7+e.phase)*off, e.base.z + Math.sin(elapsed*1.1+e.phase)*off); }
+      };
+    }
+
+    // --- Rutherford ---
+    function buildRutherford(opts={nucleusSize:0.05, electrons:6, nucleusColor:'#ff3344', electronColor:'#33a1ff', orbitSpeed:1.0, scale:1}){
+      clearAtomRoot();
+      const nucleusMesh = new THREE.Mesh(new THREE.SphereGeometry(opts.nucleusSize, 32, 24), new THREE.MeshStandardMaterial({ color:opts.nucleusColor, metalness:0.2, roughness:0.4 }));
+      atomRoot.add(nucleusMesh);
+
+      const electrons = [];
+      const base = 0.18 * opts.scale;
+      for(let i=0;i<opts.electrons;i++){
+        const r = base + (i%5) * 0.12 + Math.floor(i/5)*0.02;
+        const ang = Math.random() * Math.PI * 2; const sp = (0.6 + Math.random()*1.2) * opts.orbitSpeed;
+        const incl = (Math.random()*0.6 - 0.3);
+        const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.03,12,10), new THREE.MeshStandardMaterial({ color:opts.electronColor, metalness:0.6, roughness:0.3 }));
+        mesh.position.set(Math.cos(ang)*r, Math.sin(ang)*0.02, Math.sin(ang)*r); atomRoot.add(mesh);
+        electrons.push({mesh, radius:r, angle:ang, speed:sp, inclination:incl});
+      }
+
+      const label = makeLabelSprite('Rutherford Atom', 0.7*opts.scale, 0.18*opts.scale); label.position.set(0,0.5*opts.scale,0); atomRoot.add(label);
+      atomRoot.position.set(0,0,-0.2); atomRoot.visible=true;
+
+      let animating = true;
+      atomRoot.userData.update = (t)=>{ if(!animating) return; for(const e of electrons){ e.angle += e.speed * 0.02; const x = Math.cos(e.angle)*e.radius; const z = Math.sin(e.angle)*e.radius; const y = Math.sin(e.angle*1.5)*e.inclination*0.08; e.mesh.position.set(x,y,z); e.mesh.rotation.x += 0.02; e.mesh.rotation.y += 0.03; } nucleusMesh.rotation.y += 0.01; };
+
+      // store toggle so UI can access
+      atomRoot.userData._rutherford = { toggleAnim: ()=>{ animating = !animating; } };
+    }
+
+    // --- Bohr ---
+    const ATOMS = {
+      H:  { protons:1,  neutrons:0,  shells:[1] },
+      He: { protons:2,  neutrons:2,  shells:[2] },
+      Li: { protons:3,  neutrons:4,  shells:[2,1] },
+      C:  { protons:6,  neutrons:6,  shells:[2,4] },
+      O:  { protons:8,  neutrons:8,  shells:[2,6] },
+      Ne: { protons:10, neutrons:10, shells:[2,8] }
+    };
+
+    function buildBohr(opts={atomKey:'C', speed:1.0, scale:1}){
+      clearAtomRoot();
+      // nucleus parts
+      const protonMat = new THREE.MeshStandardMaterial({ color:0xff3344, roughness:0.5, metalness:0.2 });
+      const neutronMat = new THREE.MeshStandardMaterial({ color:0x888888, roughness:0.6, metalness:0.1 });
+      const electronMat = new THREE.MeshStandardMaterial({ color:0x33a1ff, metalness:0.7, roughness:0.2 });
+      const shellMat = new THREE.MeshBasicMaterial({ color:0xffffff, wireframe:true, opacity:0.08, transparent:true });
+
+      const nucleusParts = [];
+      const cfg = ATOMS[opts.atomKey] || ATOMS['C'];
+      const total = cfg.protons + cfg.neutrons; const spread = 0.06 + Math.cbrt(total) * 0.015;
+      for(let i=0;i<total;i++){ const isProton = i < cfg.protons; const m = new THREE.Mesh(new THREE.SphereGeometry(0.035,16,12), isProton?protonMat:neutronMat); const r = Math.random()*spread; const theta = Math.acos(2*Math.random()-1); const phi=Math.random()*Math.PI*2; m.position.set(r*Math.sin(theta)*Math.cos(phi), r*Math.sin(theta)*Math.sin(phi), r*Math.cos(theta)); m.scale.setScalar(1 - Math.random()*0.25); atomRoot.add(m); nucleusParts.push(m); }
+
+      const electrons = [];
+      const base = 0.18;
+      for(let s=0;s<cfg.shells.length;s++){
+        const count = cfg.shells[s]; const r = base + s * 0.18;
+        const shellMesh = new THREE.Mesh(new THREE.SphereGeometry(r,32,16), shellMat); atomRoot.add(shellMesh);
+        for(let i=0;i<count;i++){ const ang = (i/count)*Math.PI*2 + Math.random()*0.1; const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.03,12,10), electronMat); const x = Math.cos(ang)*r; const z = Math.sin(ang)*r; const y = Math.sin(ang*1.3)*0.02; mesh.position.set(x,y,z); atomRoot.add(mesh); electrons.push({mesh, orbitRadius:r, angle:ang, speed:0.8 + 0.4*Math.random(), shellIndex:s}); }
+      }
+
+      const label = makeLabelSprite('Bohr Atom ('+opts.atomKey+')', 0.7*opts.scale, 0.18*opts.scale); label.position.set(0,0.5*opts.scale,0); atomRoot.add(label);
+      atomRoot.position.set(0,0,-0.2); atomRoot.visible=true;
+
+      atomRoot.userData.update = (t)=>{ const speedMul = opts.speed; for(const e of electrons){ const sp = e.speed * speedMul * (1 + e.shellIndex*0.08); e.angle += sp * 0.02; const x = Math.cos(e.angle)*e.orbitRadius; const z = Math.sin(e.angle)*e.orbitRadius; const y = Math.sin(e.angle*1.7 + e.shellIndex)*0.03*(1 + e.shellIndex*0.2); e.mesh.position.set(x,y,z); e.mesh.rotation.x += 0.02; e.mesh.rotation.y += 0.03; } const breath = 1 + Math.sin(t*2.2)*0.01; nucleusParts.forEach((n, idx)=> n.scale.setScalar(breath - (idx%2)*0.01)); };
+    }
+
+    // --- Kuantum (Hydrogen orbital point isosurface approximation) ---
+    // We'll include a lightweight version of the original orbital builder. It may be CPU heavy on low-end devices; use lower resolution.
+
+    // Wavefunction helpers (same as provided)
+    function Y_real(l,m,theta,phi){
+      if(l===0 && m===0) return 0.5/Math.sqrt(Math.PI);
+      if(l===1){ if(m===0) return Math.sqrt(3/(4*Math.PI)) * Math.cos(theta); if(Math.abs(m)===1) return Math.sqrt(3/(8*Math.PI)) * Math.sin(theta) * (m>0?Math.cos(phi):Math.sin(phi)); }
+      if(l===2){ if(m===0) return Math.sqrt(5/(16*Math.PI)) * (3*Math.cos(theta)*Math.cos(theta)-1); if(Math.abs(m)===1) return Math.sqrt(15/(4*Math.PI)) * Math.sin(theta)*Math.cos(theta) * (m>0?Math.cos(phi):Math.sin(phi)); if(Math.abs(m)===2) return Math.sqrt(15/(32*Math.PI)) * Math.sin(theta)*Math.sin(theta) * (m>0?Math.cos(2*phi):Math.sin(2*phi)); }
+      return 0;
+    }
+    function R_nl(n,l,r){ if(n===1 && l===0) return 2 * Math.exp(-r); if(n===2 && l===0) return (1/2) * (2 - r) * Math.exp(-r/2); if(n===2 && l===1) return (1/(2*Math.sqrt(6))) * r * Math.exp(-r/2); if(n===3 && l===2) return (1/81) * (r*r) * Math.exp(-r/3); return Math.exp(-r); }
+    function psi_value(orbital, x,y,z){ const r = Math.sqrt(x*x + y*y + z*z); const theta = r === 0 ? 0 : Math.acos(z / r); const phi = Math.atan2(y, x); if(orbital === '1s'){ const R = R_nl(1,0,r); return R * Y_real(0,0,theta,phi); } if(orbital === '2s'){ const R = R_nl(2,0,r); return R * Y_real(0,0,theta,phi); } if(orbital === '2p0'){ const R = R_nl(2,1,r); return R * Y_real(1,0,theta,phi); } if(orbital === '2p1'){ const R = R_nl(2,1,r); return R * Y_real(1,1,theta,phi); } if(orbital === '3d0'){ const R = R_nl(3,2,r); return R * Y_real(2,0,theta,phi); } return R_nl(1,0,r) * Y_real(0,0,theta,phi); }
+
+    // Build lightweight point isosurface
+    let pointsMesh = null;
+    function gridParams(res){ const size = 1.8; const step = (size*2) / (res - 1); return { res, size, step }; }
+
+    function buildField(orbital, res){ const {res: R, size, step} = gridParams(res); const half = size; const fieldArr = new Float32Array(R*R*R); const signArr = new Float32Array(R*R*R); let maxVal = 0; let idx = 0; for(let k=0;k<R;k++){ const z = -half + k*step; for(let j=0;j<R;j++){ const y = -half + j*step; for(let i=0;i<R;i++){ const x = -half + i*step; const psi = psi_value(orbital, x, y, z); const dens = psi*psi; fieldArr[idx] = dens; signArr[idx] = psi >= 0 ? 1 : -1; if(dens > maxVal) maxVal = dens; idx++; } } } return {fieldArr, signArr, maxVal}; }
+
+    function makePointIsosurface(fieldArr, signArr, res, isoVal){ if(pointsMesh){ scene.remove(pointsMesh); pointsMesh.geometry.dispose(); pointsMesh.material.dispose(); pointsMesh = null; }
+      const {res: R, size, step} = gridParams(res); const half = size; const positions = []; const colors = []; let bandStart = Math.max(isoVal * 0.12, 1e-9); let band = bandStart; for(let attempt=0; attempt<6; attempt++){ positions.length=0; colors.length=0; for(let idx=0; idx<fieldArr.length; idx++){ const val = fieldArr[idx]; if(Math.abs(val - isoVal) <= band){ const k = Math.floor(idx / (R*R)); const rem = idx - k*R*R; const j = Math.floor(rem / R); const i = rem % R; const x = -half + i*step; const y = -half + j*step; const z = -half + k*step; positions.push(x,y,z); const sgn = signArr[idx] >= 0 ? 1 : -1; const c = sgn >= 0 ? [0.16, 0.6, 1.0] : [1.0, 0.36, 0.36]; colors.push(c[0], c[1], c[2]); } } if(positions.length>0) break; band *= 2; }
+      if(positions.length===0){ const diffs = new Float32Array(fieldArr.length); for(let i=0;i<fieldArr.length;i++) diffs[i] = Math.abs(fieldArr[i] - isoVal); const idxs = new Uint32Array(fieldArr.length); for(let i=0;i<idxs.length;i++) idxs[i] = i; const K = Math.min(800, Math.floor(fieldArr.length/200)); const selected = []; for(let s=0;s<K && s<idxs.length; s++){ let minI = s; let minVal = diffs[idxs[s]]; for(let t=s+1;t<idxs.length;t++){ const v = diffs[idxs[t]]; if(v < minVal){ minVal = v; minI = t; } } const tmp = idxs[s]; idxs[s] = idxs[minI]; idxs[minI] = tmp; selected.push(idxs[s]); } for(const idx of selected){ const k = Math.floor(idx / (R*R)); const rem = idx - k*R*R; const j = Math.floor(rem / R); const i = rem % R; const x = -half + i*step; const y = -half + j*step; const z = -half + k*step; positions.push(x,y,z); const sgn = signArr[idx] >= 0 ? 1 : -1; const c = sgn >= 0 ? [0.16, 0.6, 1.0] : [1.0, 0.36, 0.36]; colors.push(c[0], c[1], c[2]); } }
+      const posArr = new Float32Array(positions); const colArr = new Float32Array(colors); const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.BufferAttribute(posArr, 3)); geometry.setAttribute('color', new THREE.BufferAttribute(colArr, 3)); const material = new THREE.PointsMaterial({ size: Math.max(step*0.6, 0.02), vertexColors:true, sizeAttenuation:true }); const points = new THREE.Points(geometry, material); scene.add(points); pointsMesh = points; }
+
+    async function buildKuantum(opts={orbital:'1s', resolution:32, isovalue:0.02, rotSpeed:0.4}){
+      clearAtomRoot(); if(pointsMesh){ scene.remove(pointsMesh); pointsMesh.geometry.dispose(); pointsMesh.material.dispose(); pointsMesh=null; }
+      const {fieldArr, signArr, maxVal} = buildField(opts.orbital, opts.resolution);
+      const isoVal = Math.max(opts.isovalue * maxVal, 1e-12);
+      makePointIsosurface(fieldArr, signArr, opts.resolution, isoVal);
+      // add small label in atomRoot space (pointsMesh is in scene)
+      const label = makeLabelSprite('Orbital: '+opts.orbital, 0.7, 0.14); label.position.set(0,0.9,0); atomRoot.add(label); atomRoot.visible=true;
+      atomRoot.userData.update = (t)=>{ if(pointsMesh) pointsMesh.rotation.y += opts.rotSpeed * 0.001 * 60; };
+    }
+
+    // --- utilities ---
+    function makeLabelSprite(text, sx=0.6, sy=0.15){ const canvas = document.createElement('canvas'); canvas.width=512; canvas.height=128; const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); ctx.font='48px sans-serif'; ctx.fillStyle='#ffffff'; ctx.textAlign='center'; ctx.fillText(text, canvas.width/2,72); const tex = new THREE.CanvasTexture(canvas); tex.needsUpdate=true; const mat = new THREE.SpriteMaterial({ map:tex, transparent:true }); const sp = new THREE.Sprite(mat); sp.scale.set(sx, sy, 1); return sp; }
+
+    // --- UI management ---
+    const modelSelect = document.getElementById('modelSelect');
+    const modelControls = document.getElementById('modelControls');
+    const enterARBtn = document.getElementById('enterAR');
+    const resetBtn = document.getElementById('resetBtn');
+
+    // keep last build options to rebuild on reset
+    let currentOpts = {};
+
+    function showControlsFor(model){ modelControls.innerHTML = '';
+      if(model === 'dalton'){
+        modelControls.append(createLabelInput('Warna Inti','color','color','#ff6633'));
+        modelControls.append(createLabelInput('Skala','scale','range','1','min=0.5 max=2.5 step=0.01'));
+      }else if(model === 'thomson'){
+        modelControls.append(createLabelInput('Jumlah Elektron','electronCount','range','8','min=1 max=30 step=1'));
+        modelControls.append(createLabelInput('Warna Pudding','puddingColor','color','#ffd480'));
+        modelControls.append(createLabelInput('Warna Elektron','electronColor','color','#397cff'));
+        modelControls.append(createLabelInput('Skala','scale','range','1','min=0.5 max=2.5 step=0.01'));
+      }else if(model === 'rutherford'){
+        modelControls.append(createLabelInput('Jumlah Elektron','electrons','range','6','min=1 max=20 step=1'));
+        modelControls.append(createLabelInput('Ukuran Inti','nucleusSize','range','0.05','min=0.02 max=0.12 step=0.01'));
+        modelControls.append(createLabelInput('Kecepatan Orbit','orbitSpeed','range','1.0','min=0.1 max=3.0 step=0.05'));
+        modelControls.append(createLabelInput('Warna Inti','nucleusColor','color','#ff3344'));
+        modelControls.append(createLabelInput('Warna Elektron','electronColor','color','#33a1ff'));
+        modelControls.append(createLabelInput('Skala','scale','range','1','min=0.6 max=2.2 step=0.01'));
+      }else if(model === 'bohr'){
+        const sel = document.createElement('select'); sel.id='atomKey'; sel.innerHTML = '<option value="H">Hydrogen (H)</option><option value="He">Helium (He)</option><option value="Li">Lithium (Li)</option><option value="C">Carbon (C)</option><option value="O">Oxygen (O)</option><option value="Ne">Neon (Ne)</option>'; modelControls.appendChild(makeLabeled('Pilih Jenis Atom', sel));
+        modelControls.append(createLabelInput('Kecepatan Orbit','speed','range','1.0','min=0.1 max=3.0 step=0.05'));
+        modelControls.append(createLabelInput('Skala','scale','range','1.0','min=0.5 max=2.0 step=0.01'));
+      }else if(model === 'kuantum'){
+        const sel = document.createElement('select'); sel.id='orbital'; sel.innerHTML = '<option value="1s">1s</option><option value="2s">2s</option><option value="2p0">2p (m=0)</option><option value="2p1">2p (m=±1)</option><option value="3d0">3d (m=0)</option>';
+        modelControls.appendChild(makeLabeled('Pilih Orbital', sel));
+        modelControls.append(createLabelInput('Isovalue','isovalue','range','0.02','min=0 max=1 step=0.001'));
+        modelControls.append(createLabelInput('Resolusi (perf)','resolution','range','32','min=16 max=64 step=8'));
+        modelControls.append(createLabelInput('Rotation Speed','rotSpeed','range','0.4','min=0 max=2.5 step=0.01'));
+      }
+
+      // add build button
+      const b = document.createElement('button'); b.innerText = 'Build Model'; b.addEventListener('click', ()=>{ buildSelectedModel(); }); modelControls.appendChild(b);
+    }
+
+    function makeLabeled(labelText, elem){ const w = document.createElement('div'); const lbl = document.createElement('label'); lbl.innerText = labelText; w.appendChild(lbl); w.appendChild(elem); return w; }
+    function createLabelInput(labelText, id, type, value, attrStr=''){ const container = document.createElement('div'); const lbl = document.createElement('label'); lbl.innerText = labelText; const inp = document.createElement('input'); inp.id = id; inp.type = type; inp.value = value; if(attrStr){ attrStr.split(' ').forEach(tok=>{ const [k,v] = tok.split('='); if(k && v){ const clean = v.replace(/(^"|"$)/g,''); inp.setAttribute(k, clean); } }); } container.appendChild(lbl); container.appendChild(inp); return container; }
+
+    modelSelect.addEventListener('change', ()=>{ showControlsFor(modelSelect.value); });
+
+    function buildSelectedModel(){ const m = modelSelect.value; currentOpts.model = m;
+      if(m==='dalton'){ const color = document.getElementById('color').value; const scale = parseFloat(document.getElementById('scale').value); currentOpts.opts = {color, scale}; buildDalton(currentOpts.opts); }
+      else if(m==='thomson'){ const count = parseInt(document.getElementById('electronCount').value,10); const puddingColor = document.getElementById('puddingColor').value; const electronColor = document.getElementById('electronColor').value; const scale = parseFloat(document.getElementById('scale').value); currentOpts.opts = {count, puddingColor, electronColor, scale}; buildThomson(currentOpts.opts); }
+      else if(m==='rutherford'){ const electrons = parseInt(document.getElementById('electrons').value,10); const nucleusSize = parseFloat(document.getElementById('nucleusSize').value); const orbitSpeed = parseFloat(document.getElementById('orbitSpeed').value); const nucleusColor = document.getElementById('nucleusColor').value; const electronColor = document.getElementById('electronColor').value; const scale = parseFloat(document.getElementById('scale').value); currentOpts.opts = {electrons, nucleusSize, orbitSpeed, nucleusColor, electronColor, scale}; buildRutherford(currentOpts.opts); }
+      else if(m==='bohr'){ const atomKey = document.getElementById('atomKey').value; const speed = parseFloat(document.getElementById('speed').value); const scale = parseFloat(document.getElementById('scale').value); currentOpts.opts = {atomKey, speed, scale}; buildBohr(currentOpts.opts); }
+      else if(m==='kuantum'){ const orbital = document.getElementById('orbital').value; const isovalue = parseFloat(document.getElementById('isovalue').value); const resolution = parseInt(document.getElementById('resolution').value,10); const rotSpeed = parseFloat(document.getElementById('rotSpeed').value); currentOpts.opts = {orbital, isovalue, resolution, rotSpeed}; buildKuantum(currentOpts.opts); }
+    }
+
+    enterARBtn.addEventListener('click', ()=>{ // simulate click on ARButton
+      const btn = document.querySelector('button[title="AR"]') || document.querySelector('button'); // fallback
+      // prefer ARButton created by three.js
+      const ar = document.querySelector('button'); if(ar) ar.click();
     });
 
-    // If device does not support WebXR AR, show a small hint
-    if (navigator.xr === undefined) {
-      const hint = document.createElement('div');
-      hint.style.position = 'absolute';
-      hint.style.left = '12px';
-      hint.style.bottom = '12px';
-      hint.style.zIndex = 12;
-      hint.style.background = 'rgba(255,255,255,0.95)';
-      hint.style.padding = '8px 10px';
-      hint.style.borderRadius = '8px';
-      hint.style.fontSize = '13px';
-      hint.innerText = 'Perangkat/browser tidak mendukung WebXR AR. Gunakan Chrome di Android untuk uji AR. (Fallback 3D tersedia).';
-      document.body.appendChild(hint);
+    resetBtn.addEventListener('click', ()=>{ camera.position.set(0,1.2,1.8); controls.update(); atomRoot.position.set(0,0,-0.2); atomRoot.visible=true; reticle.visible=false; if(currentOpts.model) buildSelectedModel(); });
+
+    // initial controls and model
+    showControlsFor(modelSelect.value);
+    // build default
+    currentOpts = {model: modelSelect.value, opts:{}};
+    buildSelectedModel();
+
+    // render loop
+    function renderLoop(ts, frame){ const t = ts/1000; if(frame && renderer.xr.isPresenting && hitTestSource){ const ref = renderer.xr.getReferenceSpace(); const results = frame.getHitTestResults(hitTestSource); if(results.length>0){ const hit = results[0]; const pose = hit.getPose(ref); if(pose){ reticle.visible=true; reticle.position.set(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z); reticle.quaternion.set(pose.transform.orientation.x, pose.transform.orientation.y, pose.transform.orientation.z, pose.transform.orientation.w); } } else { reticle.visible=false; } }
+      // call model-specific update if exists
+      if(atomRoot.userData && typeof atomRoot.userData.update === 'function'){
+        try{ atomRoot.userData.update(t); }catch(e){ /* ignore */ }
+      }
+      renderer.render(scene, camera);
+    }
+    renderer.setAnimationLoop(renderLoop);
+
+    // resize
+    window.addEventListener('resize', ()=>{ camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+
+    // WebXR hint
+    if(typeof navigator.xr === 'undefined'){
+      const h = document.createElement('div'); h.style.position='absolute'; h.style.left='12px'; h.style.bottom='12px'; h.style.zIndex=12; h.style.background='rgba(255,255,255,0.95)'; h.style.padding='8px'; h.style.borderRadius='8px'; h.style.fontSize='13px'; h.textContent='Perangkat/browser tidak mendukung WebXR AR. Gunakan Chrome di Android + ARCore. Preview 3D tersedia.'; document.body.appendChild(h);
     }
 
   </script>
