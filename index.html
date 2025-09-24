@@ -1,365 +1,361 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!doctype html>
+<html lang="id">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2575.4">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover" />
+  <title>WebAR Atom (Markerless)</title>
+  <style>
+    html,body { height:100%; margin:0; font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial; -webkit-font-smoothing:antialiased; }
+    #overlay {
+      position: absolute; left: 12px; top: 12px; z-index: 10;
+      background: rgba(255,255,255,0.92); padding:10px; border-radius:10px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.12); max-width: 320px;
+      font-size:14px;
+    }
+    label { display:block; margin-bottom:6px; font-weight:600; }
+    select, button { width:100%; padding:8px 10px; margin-bottom:8px; border-radius:8px; border:1px solid #ddd; background:white; }
+    #hint { font-size:12px; color:#555; }
+    #canvas-container { width:100%; height:100%; overflow:hidden; }
+    .credit { position: absolute; right:12px; bottom:12px; background: rgba(0,0,0,0.6); color:#fff; padding:6px 10px; border-radius:8px; z-index:10; font-size:13px;}
   </style>
+
+  <!-- Import map fixes bare module specifiers like "three" so example modules that import 'three' will resolve correctly. -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.152.2/build/three.module.js",
+      "three/": "https://unpkg.com/three@0.152.2/"
+    }
+  }
+  </script>
 </head>
 <body>
-<p class="p1">&lt;!doctype html&gt;</p>
-<p class="p1">&lt;html lang="id"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta charset="utf-8" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;WebAR Atom (Markerless)&lt;/title&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;style&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>html,body { height:100%; margin:0; font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial; -webkit-font-smoothing:antialiased; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#overlay {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>position: absolute; left: 12px; top: 12px; z-index: 10;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: rgba(255,255,255,0.92); padding:10px; border-radius:10px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>box-shadow: 0 6px 18px rgba(0,0,0,0.12); max-width: 320px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-size:14px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>label { display:block; margin-bottom:6px; font-weight:600; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>select, button { width:100%; padding:8px 10px; margin-bottom:8px; border-radius:8px; border:1px solid #ddd; background:white; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#hint { font-size:12px; color:#555; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#canvas-container { width:100%; height:100%; overflow:hidden; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.credit { position: absolute; right:12px; bottom:12px; background: rgba(0,0,0,0.6); color:#fff; padding:6px 10px; border-radius:8px; z-index:10; font-size:13px;}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/style&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="overlay"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;label for="atomSelect"&gt;Pilih Jenis Atom&lt;/label&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;select id="atomSelect"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;option value="H"&gt;Hydrogen (H)&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;option value="He"&gt;Helium (He)&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;option value="Li"&gt;Lithium (Li)&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;option value="C"&gt;Carbon (C)&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;option value="O"&gt;Oxygen (O)&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;option value="Ne"&gt;Neon (Ne)&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/select&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;button id="resetBtn"&gt;Reset Model&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="hint"&gt;Tekan &lt;strong&gt;"Enter AR"&lt;/strong&gt; untuk meletakkan model di permukaan (jika device mendukung WebXR AR).&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="canvas-container"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="credit"&gt;AR Markerless — Ari&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;script type="module"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>// IMPORTS (three.js + helper modules) via unpkg CDN</p>
-<p class="p1"><span class="Apple-converted-space">    </span>import * as THREE from 'https://unpkg.com/three@0.152.2/build/three.module.js';</p>
-<p class="p1"><span class="Apple-converted-space">    </span>import { ARButton } from 'https://unpkg.com/three@0.152.2/examples/jsm/webxr/ARButton.js';</p>
-<p class="p1"><span class="Apple-converted-space">    </span>import { OrbitControls } from 'https://unpkg.com/three@0.152.2/examples/jsm/controls/OrbitControls.js';</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// ---------- Config atom sederhana ----------</p>
-<p class="p1"><span class="Apple-converted-space">    </span>// electronShells arrays: each number is electrons in that shell</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const ATOMS = {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>"H":<span class="Apple-converted-space">  </span>{ protons:1,<span class="Apple-converted-space">  </span>neutrons:0,<span class="Apple-converted-space">  </span>electrons: [1] },</p>
-<p class="p1"><span class="Apple-converted-space">      </span>"He": { protons:2,<span class="Apple-converted-space">  </span>neutrons:2,<span class="Apple-converted-space">  </span>electrons: [2] },</p>
-<p class="p1"><span class="Apple-converted-space">      </span>"Li": { protons:3,<span class="Apple-converted-space">  </span>neutrons:4,<span class="Apple-converted-space">  </span>electrons: [2,1] },</p>
-<p class="p1"><span class="Apple-converted-space">      </span>"C":<span class="Apple-converted-space">  </span>{ protons:6,<span class="Apple-converted-space">  </span>neutrons:6,<span class="Apple-converted-space">  </span>electrons: [2,4] }, // simple valence</p>
-<p class="p1"><span class="Apple-converted-space">      </span>"O":<span class="Apple-converted-space">  </span>{ protons:8,<span class="Apple-converted-space">  </span>neutrons:8,<span class="Apple-converted-space">  </span>electrons: [2,6] },</p>
-<p class="p1"><span class="Apple-converted-space">      </span>"Ne": { protons:10, neutrons:10, electrons: [2,8] },</p>
-<p class="p1"><span class="Apple-converted-space">    </span>};</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// ---------- Scene, renderer ----------</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const container = document.getElementById('canvas-container');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const scene = new THREE.Scene();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>scene.background = new THREE.Color(0x000000);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.01, 20);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });</p>
-<p class="p1"><span class="Apple-converted-space">    </span>renderer.setPixelRatio(window.devicePixelRatio);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>renderer.setSize(window.innerWidth, window.innerHeight);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>renderer.xr.enabled = true;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>container.appendChild(renderer.domElement);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// LIGHT</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>scene.add(hemi);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const dir = new THREE.DirectionalLight(0xffffff, 0.8);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>dir.position.set(3,5,1);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>scene.add(dir);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Controls for non-AR fallback</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const controls = new OrbitControls(camera, renderer.domElement);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>controls.target.set(0, 0.15, 0);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>camera.position.set(0, 1.2, 1.8);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>controls.update();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Root for atom model; in AR we'll attach this to an anchor at hit-test.</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let atomRoot = new THREE.Group();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>atomRoot.visible = false;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>scene.add(atomRoot);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// variables for physics/animation</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let electrons = []; // {mesh, orbitRadius, speed, inclination, phase}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let nucleusParts = []; // proton/neutron meshes (if we want to animate)</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let animStart = performance.now();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// MATERIALS</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const protonMat = new THREE.MeshStandardMaterial({ color: 0xff3355, metalness:0.2, roughness:0.6 });</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const neutronMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness:0.2, roughness:0.6 });</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const electronMat = new THREE.MeshStandardMaterial({ color: 0x3399ff, metalness:0.6, roughness:0.2 });</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const shellMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, opacity: 0.09, transparent: true });</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Build nucleus: pack protons+neutrons roughly in a sphere</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function buildNucleus(protons, neutrons) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>// clear previous nucleus</p>
-<p class="p1"><span class="Apple-converted-space">      </span>nucleusParts.forEach(m =&gt; atomRoot.remove(m));</p>
-<p class="p1"><span class="Apple-converted-space">      </span>nucleusParts = [];</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>const total = protons + neutrons;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const radius = 0.08 + Math.cbrt(total) * 0.02; // visual scale</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const sphereGeom = new THREE.SphereGeometry(0.035, 16, 12);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>// distribute positions within small radius</p>
-<p class="p1"><span class="Apple-converted-space">      </span>for (let i=0;i&lt;total;i++){</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const p = new THREE.Mesh(sphereGeom, i &lt; protons ? protonMat : neutronMat);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>// random point in sphere</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const r = Math.random() * radius * 0.9;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const theta = Math.acos(2*Math.random() - 1);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const phi = Math.random() * Math.PI * 2;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>p.position.set(</p>
-<p class="p1"><span class="Apple-converted-space">          </span>r * Math.sin(theta) * Math.cos(phi),</p>
-<p class="p1"><span class="Apple-converted-space">          </span>r * Math.sin(theta) * Math.sin(phi),</p>
-<p class="p1"><span class="Apple-converted-space">          </span>r * Math.cos(theta)</p>
-<p class="p1"><span class="Apple-converted-space">        </span>);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>p.scale.setScalar(1.0 - Math.random()*0.25);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>atomRoot.add(p);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>nucleusParts.push(p);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Build electrons shells</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function buildElectrons(shells) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>// clear previous electrons and shells</p>
-<p class="p1"><span class="Apple-converted-space">      </span>electrons.forEach(e =&gt; atomRoot.remove(e.mesh));</p>
-<p class="p1"><span class="Apple-converted-space">      </span>electrons = [];</p>
-<p class="p1"><span class="Apple-converted-space">      </span>// remove previous shell visuals</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const prevShells = atomRoot.getObjectByName('shellsGroup');</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if(prevShells) atomRoot.remove(prevShells);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>const shellsGroup = new THREE.Group();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>shellsGroup.name = 'shellsGroup';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>atomRoot.add(shellsGroup);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>const baseRadius = 0.2;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>for (let s=0; s&lt;shells.length; s++){</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const count = shells[s];</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const orbitRadius = baseRadius + s * 0.18 + Math.max(0, s-1)*0.06;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>// shell visual</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const shellGeom = new THREE.SphereGeometry(orbitRadius, 32, 16);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const shell = new THREE.Mesh(shellGeom, shellMat);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>shellsGroup.add(shell);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>for (let i=0;i&lt;count;i++){</p>
-<p class="p1"><span class="Apple-converted-space">          </span>const phi = (i / count) * Math.PI * 2;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>// each electron is smaller sphere</p>
-<p class="p1"><span class="Apple-converted-space">          </span>const geom = new THREE.SphereGeometry(0.03, 12, 10);</p>
-<p class="p1"><span class="Apple-converted-space">          </span>const m = new THREE.Mesh(geom, electronMat);</p>
-<p class="p1"><span class="Apple-converted-space">          </span>// initial position</p>
-<p class="p1"><span class="Apple-converted-space">          </span>const x = Math.cos(phi) * orbitRadius;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>const z = Math.sin(phi) * orbitRadius;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>const y = Math.sin((i+1)*0.3 + s*0.2) * 0.05;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>m.position.set(x, y, z);</p>
-<p class="p1"><span class="Apple-converted-space">          </span>atomRoot.add(m);</p>
-<p class="p1"><span class="Apple-converted-space">          </span>// push behavior</p>
-<p class="p1"><span class="Apple-converted-space">          </span>electrons.push({</p>
-<p class="p1"><span class="Apple-converted-space">            </span>mesh: m,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>orbitRadius,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>speed: 0.6 + 0.2*Math.random() + s*0.05,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>inclination: (Math.random()*0.6 - 0.3), // tilt</p>
-<p class="p1"><span class="Apple-converted-space">            </span>phase: Math.random()*Math.PI*2,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>shellIndex: s</p>
-<p class="p1"><span class="Apple-converted-space">          </span>});</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Build atom model (high-level)</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function buildAtom(atomKey) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const cfg = ATOMS[atomKey] || ATOMS['C'];</p>
-<p class="p1"><span class="Apple-converted-space">      </span>// reset</p>
-<p class="p1"><span class="Apple-converted-space">      </span>atomRoot.position.set(0,0, -0.2); // initial offset for non-AR view</p>
-<p class="p1"><span class="Apple-converted-space">      </span>atomRoot.visible = true;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>// clear children except atomRoot itself handled in builders</p>
-<p class="p1"><span class="Apple-converted-space">      </span>buildNucleus(cfg.protons, cfg.neutrons);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>buildElectrons(cfg.electrons);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// animate electrons</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function animateElectrons(t) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const elapsed = (t - animStart) / 1000;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>for (const e of electrons) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const phase = e.phase + elapsed * e.speed;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>// circular orbit plus tilt/inclination</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const r = e.orbitRadius;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const x = Math.cos(phase) * r;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const z = Math.sin(phase) * r * Math.cos(e.inclination);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const y = Math.sin(phase * 1.7 + e.phase) * 0.06 + Math.sin(e.inclination*5) * 0.02;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>e.mesh.position.set(x, y, z);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>// add a subtle rotation for the electron itself</p>
-<p class="p1"><span class="Apple-converted-space">        </span>e.mesh.rotation.x += 0.02 + 0.01*Math.sin(elapsed);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>e.mesh.rotation.y += 0.03;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>// slight nucleus "breath"</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const breath = 1 + Math.sin(elapsed*2.3) * 0.01;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>nucleusParts.forEach((n, idx) =&gt; n.scale.setScalar(breath - (idx%2)*0.01));</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// ---------- AR stuff: hit-test and placement ----------</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let hitTestSource = null;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let localReferenceSpace = null;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let placed = false; // whether user placed the atom in AR</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let reticle = null;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// create reticle for indicating placement (simple ring)</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function createReticle() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const geometry = new THREE.RingGeometry(0.07, 0.095, 32).rotateX(-Math.PI/2);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const mat = new THREE.MeshBasicMaterial({ color: 0x00ffcc, opacity: 0.7, transparent: true });</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const mesh = new THREE.Mesh(geometry, mat);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>mesh.visible = false;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>scene.add(mesh);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>reticle = mesh;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>createReticle();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// function to start AR session</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function initARButton() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>// ARButton will add a button automatically if available</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const arBtn = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });</p>
-<p class="p1"><span class="Apple-converted-space">      </span>// reposition the AR button below our overlay</p>
-<p class="p1"><span class="Apple-converted-space">      </span>arBtn.style.position = 'absolute';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>arBtn.style.bottom = '12px';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>arBtn.style.left = '50%';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>arBtn.style.transform = 'translateX(-50%)';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>arBtn.style.zIndex = 12;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>document.body.appendChild(arBtn);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>// listen for session start to setup hit-test</p>
-<p class="p1"><span class="Apple-converted-space">      </span>renderer.xr.addEventListener('sessionstart', async () =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const session = renderer.xr.getSession();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Reference space</p>
-<p class="p1"><span class="Apple-converted-space">        </span>localReferenceSpace = await session.requestReferenceSpace('viewer');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const viewerSpace = await session.requestReferenceSpace('viewer');</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// request hit-test source</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (session.requestHitTestSource) {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>hitTestSource = await session.requestHitTestSource({ space: localReferenceSpace });</p>
-<p class="p1"><span class="Apple-converted-space">        </span>} else if (session.requestHitTestSourceForTransientInput) {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>// fallback: try transient input (rare)</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>session.addEventListener('select', onSelect); // tap to place</p>
-<p class="p1"><span class="Apple-converted-space">        </span>placed = false;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>reticle.visible = false;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>renderer.xr.addEventListener('sessionend', () =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>hitTestSource = null;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>localReferenceSpace = null;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>reticle.visible = false;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>placed = false;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>});</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function onSelect() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>// place the atomRoot at reticle location</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (reticle &amp;&amp; reticle.visible) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>atomRoot.position.copy(reticle.position);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>atomRoot.quaternion.copy(reticle.quaternion);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>atomRoot.visible = true;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>placed = true;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>// once placed, optionally hide reticle or keep it</p>
-<p class="p1"><span class="Apple-converted-space">        </span>reticle.visible = false;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// ---------- animation loop ----------</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function renderLoop(timestamp, frame) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>// AR hit-test updates reticle</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (frame &amp;&amp; renderer.xr.isPresenting &amp;&amp; hitTestSource) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const referenceSpace = renderer.xr.getReferenceSpace();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const session = renderer.xr.getSession();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const viewerPose = frame.getViewerPose(referenceSpace);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (viewerPose) {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>const hitTestResults = frame.getHitTestResults(hitTestSource);</p>
-<p class="p1"><span class="Apple-converted-space">          </span>if (hitTestResults.length &gt; 0) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const hit = hitTestResults[0];</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const pose = hit.getPose(referenceSpace);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>// position reticle</p>
-<p class="p1"><span class="Apple-converted-space">            </span>reticle.visible = true;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>reticle.position.set(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>reticle.quaternion.set(pose.transform.orientation.x, pose.transform.orientation.y, pose.transform.orientation.z, pose.transform.orientation.w);</p>
-<p class="p1"><span class="Apple-converted-space">          </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>reticle.visible = false;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>// non-AR fallback: animation still runs</p>
-<p class="p1"><span class="Apple-converted-space">      </span>animateElectrons(timestamp);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>renderer.render(scene, camera);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>renderer.setAnimationLoop(renderLoop);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// ---------- UI hooks ----------</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const atomSelect = document.getElementById('atomSelect');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const resetBtn = document.getElementById('resetBtn');</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>atomSelect.addEventListener('change', (e) =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const key = e.target.value;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>buildAtom(key);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>resetBtn.addEventListener('click', () =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>placed = false;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>atomRoot.visible = false;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>// rebuild currently selected atom</p>
-<p class="p1"><span class="Apple-converted-space">      </span>buildAtom(atomSelect.value);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>// reposition camera for non-AR preview</p>
-<p class="p1"><span class="Apple-converted-space">      </span>camera.position.set(0, 1.2, 1.8);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>controls.update();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// initial atom</p>
-<p class="p1"><span class="Apple-converted-space">    </span>buildAtom(atomSelect.value);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// ARButton init (adds button if supported)</p>
-<p class="p1"><span class="Apple-converted-space">    </span>initARButton();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Handle resize</p>
-<p class="p1"><span class="Apple-converted-space">    </span>window.addEventListener('resize', () =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>camera.aspect = window.innerWidth/window.innerHeight;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>camera.updateProjectionMatrix();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>renderer.setSize(window.innerWidth, window.innerHeight);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// If device does not support WebXR AR, show a small hint</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (navigator.xr === undefined) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const hint = document.createElement('div');</p>
-<p class="p1"><span class="Apple-converted-space">      </span>hint.style.position = 'absolute';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>hint.style.left = '12px';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>hint.style.bottom = '12px';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>hint.style.zIndex = 12;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>hint.style.background = 'rgba(255,255,255,0.95)';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>hint.style.padding = '8px 10px';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>hint.style.borderRadius = '8px';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>hint.style.fontSize = '13px';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>hint.innerText = 'Perangkat/browser tidak mendukung WebXR AR. Gunakan Chrome di Android untuk uji AR. (Fallback 3D tersedia).';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>document.body.appendChild(hint);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/script&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+  <div id="overlay">
+    <label for="atomSelect">Pilih Jenis Atom</label>
+    <select id="atomSelect">
+      <option value="H">Hydrogen (H)</option>
+      <option value="He">Helium (He)</option>
+      <option value="Li">Lithium (Li)</option>
+      <option value="C">Carbon (C)</option>
+      <option value="O">Oxygen (O)</option>
+      <option value="Ne">Neon (Ne)</option>
+    </select>
+    <button id="resetBtn">Reset Model</button>
+    <div id="hint">Tekan <strong>"Enter AR"</strong> untuk meletakkan model di permukaan (jika device mendukung WebXR AR).</div>
+  </div>
+
+  <div id="canvas-container"></div>
+  <div class="credit">AR Markerless — Ari</div>
+
+  <script type="module">
+    // Using bare imports (e.g. 'three' and 'three/examples/...') — the importmap above maps 'three' to the CDN module.
+    // This avoids the "Failed to resolve module specifier 'three'" error in browsers that support import maps.
+    import * as THREE from 'three';
+    import { ARButton } from 'three/examples/jsm/webxr/ARButton.js';
+    import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
+    // ---------- Config atom sederhana ----------
+    // electronShells arrays: each number is electrons in that shell
+    const ATOMS = {
+      "H":  { protons:1,  neutrons:0,  electrons: [1] },
+      "He": { protons:2,  neutrons:2,  electrons: [2] },
+      "Li": { protons:3,  neutrons:4,  electrons: [2,1] },
+      "C":  { protons:6,  neutrons:6,  electrons: [2,4] }, // simple valence
+      "O":  { protons:8,  neutrons:8,  electrons: [2,6] },
+      "Ne": { protons:10, neutrons:10, electrons: [2,8] },
+    };
+
+    // ---------- Scene, renderer ----------
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.01, 20);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.xr.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    // LIGHT
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
+    scene.add(hemi);
+    const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+    dir.position.set(3,5,1);
+    scene.add(dir);
+
+    // Controls for non-AR fallback
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0.15, 0);
+    camera.position.set(0, 1.2, 1.8);
+    controls.update();
+
+    // Root for atom model; in AR we'll attach this to an anchor at hit-test.
+    let atomRoot = new THREE.Group();
+    atomRoot.visible = false;
+    scene.add(atomRoot);
+
+    // variables for physics/animation
+    let electrons = []; // {mesh, orbitRadius, speed, inclination, phase}
+    let nucleusParts = []; // proton/neutron meshes (if we want to animate)
+    let animStart = performance.now();
+
+    // MATERIALS
+    const protonMat = new THREE.MeshStandardMaterial({ color: 0xff3355, metalness:0.2, roughness:0.6 });
+    const neutronMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness:0.2, roughness:0.6 });
+    const electronMat = new THREE.MeshStandardMaterial({ color: 0x3399ff, metalness:0.6, roughness:0.2 });
+    const shellMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, opacity: 0.09, transparent: true });
+
+    // Build nucleus: pack protons+neutrons roughly in a sphere
+    function buildNucleus(protons, neutrons) {
+      // clear previous nucleus
+      nucleusParts.forEach(m => atomRoot.remove(m));
+      nucleusParts = [];
+
+      const total = protons + neutrons;
+      const radius = 0.08 + Math.cbrt(total) * 0.02; // visual scale
+      const sphereGeom = new THREE.SphereGeometry(0.035, 16, 12);
+
+      // distribute positions within small radius
+      for (let i=0;i<total;i++){
+        const p = new THREE.Mesh(sphereGeom, i < protons ? protonMat : neutronMat);
+        // random point in sphere
+        const r = Math.random() * radius * 0.9;
+        const theta = Math.acos(2*Math.random() - 1);
+        const phi = Math.random() * Math.PI * 2;
+        p.position.set(
+          r * Math.sin(theta) * Math.cos(phi),
+          r * Math.sin(theta) * Math.sin(phi),
+          r * Math.cos(theta)
+        );
+        p.scale.setScalar(1.0 - Math.random()*0.25);
+        atomRoot.add(p);
+        nucleusParts.push(p);
+      }
+    }
+
+    // Build electrons shells
+    function buildElectrons(shells) {
+      // clear previous electrons and shells
+      electrons.forEach(e => atomRoot.remove(e.mesh));
+      electrons = [];
+      // remove previous shell visuals
+      const prevShells = atomRoot.getObjectByName('shellsGroup');
+      if(prevShells) atomRoot.remove(prevShells);
+
+      const shellsGroup = new THREE.Group();
+      shellsGroup.name = 'shellsGroup';
+      atomRoot.add(shellsGroup);
+
+      const baseRadius = 0.2;
+      for (let s=0; s<shells.length; s++){
+        const count = shells[s];
+        const orbitRadius = baseRadius + s * 0.18 + Math.max(0, s-1)*0.06;
+        // shell visual
+        const shellGeom = new THREE.SphereGeometry(orbitRadius, 32, 16);
+        const shell = new THREE.Mesh(shellGeom, shellMat);
+        shellsGroup.add(shell);
+
+        for (let i=0;i<count;i++){
+          const phi = (i / count) * Math.PI * 2;
+          // each electron is smaller sphere
+          const geom = new THREE.SphereGeometry(0.03, 12, 10);
+          const m = new THREE.Mesh(geom, electronMat);
+          // initial position
+          const x = Math.cos(phi) * orbitRadius;
+          const z = Math.sin(phi) * orbitRadius;
+          const y = Math.sin((i+1)*0.3 + s*0.2) * 0.05;
+          m.position.set(x, y, z);
+          atomRoot.add(m);
+          // push behavior
+          electrons.push({
+            mesh: m,
+            orbitRadius,
+            speed: 0.6 + 0.2*Math.random() + s*0.05,
+            inclination: (Math.random()*0.6 - 0.3), // tilt
+            phase: Math.random()*Math.PI*2,
+            shellIndex: s
+          });
+        }
+      }
+    }
+
+    // Build atom model (high-level)
+    function buildAtom(atomKey) {
+      const cfg = ATOMS[atomKey] || ATOMS['C'];
+      // reset
+      atomRoot.position.set(0,0, -0.2); // initial offset for non-AR view
+      atomRoot.visible = true;
+      // clear children except atomRoot itself handled in builders
+      buildNucleus(cfg.protons, cfg.neutrons);
+      buildElectrons(cfg.electrons);
+    }
+
+    // animate electrons
+    function animateElectrons(t) {
+      const elapsed = (t - animStart) / 1000;
+      for (const e of electrons) {
+        const phase = e.phase + elapsed * e.speed;
+        // circular orbit plus tilt/inclination
+        const r = e.orbitRadius;
+        const x = Math.cos(phase) * r;
+        const z = Math.sin(phase) * r * Math.cos(e.inclination);
+        const y = Math.sin(phase * 1.7 + e.phase) * 0.06 + Math.sin(e.inclination*5) * 0.02;
+        e.mesh.position.set(x, y, z);
+        // add a subtle rotation for the electron itself
+        e.mesh.rotation.x += 0.02 + 0.01*Math.sin(elapsed);
+        e.mesh.rotation.y += 0.03;
+      }
+      // slight nucleus "breath"
+      const breath = 1 + Math.sin(elapsed*2.3) * 0.01;
+      nucleusParts.forEach((n, idx) => n.scale.setScalar(breath - (idx%2)*0.01));
+    }
+
+    // ---------- AR stuff: hit-test and placement ----------
+    let hitTestSource = null;
+    let localReferenceSpace = null;
+    let placed = false; // whether user placed the atom in AR
+    let reticle = null;
+
+    // create reticle for indicating placement (simple ring)
+    function createReticle() {
+      const geometry = new THREE.RingGeometry(0.07, 0.095, 32).rotateX(-Math.PI/2);
+      const mat = new THREE.MeshBasicMaterial({ color: 0x00ffcc, opacity: 0.7, transparent: true });
+      const mesh = new THREE.Mesh(geometry, mat);
+      mesh.visible = false;
+      scene.add(mesh);
+      reticle = mesh;
+    }
+    createReticle();
+
+    // function to start AR session
+    function initARButton() {
+      // ARButton will add a button automatically if available
+      const arBtn = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
+      // reposition the AR button below our overlay
+      arBtn.style.position = 'absolute';
+      arBtn.style.bottom = '12px';
+      arBtn.style.left = '50%';
+      arBtn.style.transform = 'translateX(-50%)';
+      arBtn.style.zIndex = 12;
+      document.body.appendChild(arBtn);
+
+      // listen for session start to setup hit-test
+      renderer.xr.addEventListener('sessionstart', async () => {
+        const session = renderer.xr.getSession();
+        // Reference space
+        localReferenceSpace = await session.requestReferenceSpace('viewer');
+
+        // request hit-test source (viewer space)
+        if (session.requestHitTestSource) {
+          try {
+            hitTestSource = await session.requestHitTestSource({ space: localReferenceSpace });
+          } catch (err) {
+            console.warn('Hit test source request failed:', err);
+            hitTestSource = null;
+          }
+        }
+
+        session.addEventListener('select', onSelect); // tap to place
+        placed = false;
+        reticle.visible = false;
+      });
+
+      renderer.xr.addEventListener('sessionend', () => {
+        hitTestSource = null;
+        localReferenceSpace = null;
+        reticle.visible = false;
+        placed = false;
+      });
+    }
+
+    function onSelect() {
+      // place the atomRoot at reticle location
+      if (reticle && reticle.visible) {
+        atomRoot.position.copy(reticle.position);
+        atomRoot.quaternion.copy(reticle.quaternion);
+        atomRoot.visible = true;
+        placed = true;
+        // once placed, optionally hide reticle or keep it
+        reticle.visible = false;
+      }
+    }
+
+    // ---------- animation loop ----------
+    function renderLoop(timestamp, frame) {
+      // AR hit-test updates reticle
+      if (frame && renderer.xr.isPresenting && hitTestSource) {
+        const referenceSpace = renderer.xr.getReferenceSpace();
+        const hitTestResults = frame.getHitTestResults(hitTestSource);
+        if (hitTestResults.length > 0) {
+          const hit = hitTestResults[0];
+          const pose = hit.getPose(referenceSpace);
+          if (pose) {
+            // position reticle
+            reticle.visible = true;
+            reticle.position.set(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z);
+            reticle.quaternion.set(pose.transform.orientation.x, pose.transform.orientation.y, pose.transform.orientation.z, pose.transform.orientation.w);
+          }
+        } else {
+          reticle.visible = false;
+        }
+      }
+
+      // non-AR fallback: animation still runs
+      animateElectrons(timestamp);
+
+      renderer.render(scene, camera);
+    }
+
+    renderer.setAnimationLoop(renderLoop);
+
+    // ---------- UI hooks ----------
+    const atomSelect = document.getElementById('atomSelect');
+    const resetBtn = document.getElementById('resetBtn');
+
+    atomSelect.addEventListener('change', (e) => {
+      const key = e.target.value;
+      buildAtom(key);
+    });
+
+    resetBtn.addEventListener('click', () => {
+      placed = false;
+      atomRoot.visible = false;
+      // rebuild currently selected atom
+      buildAtom(atomSelect.value);
+      // reposition camera for non-AR preview
+      camera.position.set(0, 1.2, 1.8);
+      controls.update();
+    });
+
+    // initial atom
+    buildAtom(atomSelect.value);
+
+    // ARButton init (adds button if supported)
+    initARButton();
+
+    // Handle resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth/window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // If device does not support WebXR AR, show a small hint
+    if (navigator.xr === undefined) {
+      const hint = document.createElement('div');
+      hint.style.position = 'absolute';
+      hint.style.left = '12px';
+      hint.style.bottom = '12px';
+      hint.style.zIndex = 12;
+      hint.style.background = 'rgba(255,255,255,0.95)';
+      hint.style.padding = '8px 10px';
+      hint.style.borderRadius = '8px';
+      hint.style.fontSize = '13px';
+      hint.innerText = 'Perangkat/browser tidak mendukung WebXR AR. Gunakan Chrome di Android untuk uji AR. (Fallback 3D tersedia).';
+      document.body.appendChild(hint);
+    }
+
+  </script>
 </body>
 </html>
